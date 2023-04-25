@@ -137,7 +137,7 @@ func resourceCloudflareZoneCreate(ctx context.Context, d *schema.ResourceData, m
 			_, err := client.ZoneSetPaused(ctx, zone.ID, paused.(bool))
 
 			if err != nil {
-				return fmt.Errorf("error updating zone_id %q: %w", zone.ID, err)
+				return diag.FromErr(retry)
 			}
 		}
 	}
@@ -151,7 +151,7 @@ func resourceCloudflareZoneCreate(ctx context.Context, d *schema.ResourceData, m
 	if ztype, ok := d.GetOk("type"); ok {
 		_, err := client.ZoneSetType(ctx, zone.ID, ztype.(string))
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("error setting type on zone ID %q: %w", zone.ID, err))
+			return diag.FromErr(retry)
 		}
 	}
 
