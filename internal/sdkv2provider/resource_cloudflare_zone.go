@@ -159,7 +159,8 @@ func resourceCloudflareZoneCreate(ctx context.Context, d *schema.ResourceData, m
 		return nilresourceCloudflareZoneRead(ctx, d, meta)
 	}
 	})
-
+}
+	
 func resourceCloudflareZoneRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudflare.API)
 	zoneID := d.Id()
