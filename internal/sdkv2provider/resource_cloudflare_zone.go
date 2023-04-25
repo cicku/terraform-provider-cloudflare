@@ -118,14 +118,19 @@ func resourceCloudflareZoneCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	tflog.Info(ctx, fmt.Sprintf("Creating Cloudflare Zone: name %s", zoneName))
+	
+	retry := retry.RetryContext(ctx, d.Timeout(schema.TimeoutDefault), func() *retry.RetryError {
+		zone, err := client.CreateZone(ctx, zoneName, jumpstart, account, zoneType)
+		if err != nil {
+			var requestError *cloudflare.RequestError
+			if errors.As(err, &requestError) && sliceContainsInt(requestError.ErrorCodes(), 10000) {
+				return retry.RetryableError(fmt.Errorf("error creating zone %q: %w", zoneName, err))
+			} else {
+				return retry.NonRetryableError(fmt.Errorf("failed %w", err))
+			}
+		}
 
-	zone, err := client.CreateZone(ctx, zoneName, jumpstart, account, zoneType)
-
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error creating zone %q: %w", zoneName, err))
-	}
-
-	d.SetId(zone.ID)
+		d.SetId(zone.ID)
 
 	if paused, ok := d.GetOk("paused"); ok {
 		if paused.(bool) == true {
@@ -150,8 +155,10 @@ func resourceCloudflareZoneCreate(ctx context.Context, d *schema.ResourceData, m
 		}
 	}
 
-	return resourceCloudflareZoneRead(ctx, d, meta)
-}
+		if retry != nil {
+		return nilresourceCloudflareZoneRead(ctx, d, meta)
+	}
+	})
 
 func resourceCloudflareZoneRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*cloudflare.API)
