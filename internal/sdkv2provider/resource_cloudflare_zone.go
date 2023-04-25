@@ -137,7 +137,7 @@ func resourceCloudflareZoneCreate(ctx context.Context, d *schema.ResourceData, m
 			_, err := client.ZoneSetPaused(ctx, zone.ID, paused.(bool))
 
 			if err != nil {
-				return diag.FromErr(fmt.Errorf("error updating zone_id %q: %w", zone.ID, err))
+				return fmt.Errorf("error updating zone_id %q: %w", zone.ID, err)
 			}
 		}
 	}
